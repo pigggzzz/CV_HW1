@@ -44,7 +44,7 @@ CV_HW1/
 pip install numpy matplotlib scikit-learn
 ```
 
-### 2. 运行完整实验（推荐唯一入口）
+### 2. 运行完整实验
 
 在项目根目录执行：
 
@@ -52,7 +52,8 @@ pip install numpy matplotlib scikit-learn
 python train.py
 ```
 
-该流程会依次完成：数据准备 → **网格超参短训**（默认每组 20 epoch）→ 用最优超参 **长训**（默认 100 epoch）→ 测试集准确率与 **混淆矩阵** → 保存 `checkpoints/best_model.npz` → 生成训练/验证 **Loss 与验证 Accuracy 曲线**、**第一层权重图**、**错例图**，并输出 `figures/experiment_report.md` 草稿。超参对比表见 `results/hparam_sweep_short.json` / `.csv`，汇总图见 `figures/hyperparameter_search_summary.png`。
+该流程会依次完成：
+数据准备 → **网格超参短训**（默认每组 20 epoch）→ 用最优超参 **长训**（默认 100 epoch）→ 测试集准确率与 **混淆矩阵** → 保存 `checkpoints/best_model.npz` → 生成训练/验证 **Loss 与验证 Accuracy 曲线**、**第一层权重图**、**错例图**。超参对比表见 `results/hparam_sweep_short.json` / `.csv`，汇总图见 `figures/hyperparameter_search_summary.png`。
 
 可选参数：
 
