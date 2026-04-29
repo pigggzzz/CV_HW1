@@ -246,3 +246,73 @@ def analyze_misclassified_samples(misclassified_samples, class_names=None):
         print(f"  Top-3 预测:")
         for rank, pred_idx in enumerate(top_3_indices):
             print(f"    {rank+1}. {class_names[pred_idx]}: {probs[pred_idx]:.4f}")
+
+
+def _hparam_run_label(r, max_len=52):
+    """将单条超参记录压缩为短标签，用于条形图。"""
+    parts = []
+    for k in ("learning_rate", "hidden_dim", "l2_lambda", "batch_size", "activation"):
+        if k in r:
+            v = r[k]
+            if k == "learning_rate" or k == "l2_lambda":
+                parts.append(f"{k[:3]}={v:.4g}")
+            else:
+                parts.append(f"{k[:3]}={v}")
+    s = " ".join(parts)
+    return s if len(s) <= max_len else s[: max_len - 1] + "…"
+
+
+def plot_hyperparameter_search_results(results, save_path="./figures", metric="best_val_accuracy", top_n=16):
+    """
+    可视化超参数搜索结果：按 run_id 的指标变化 + 最优若干组的横向对比。
+
+    Args:
+        results: hyperparameter_search 中记录的 run 列表（含 run_id 与各超参）
+        save_path: 输出目录
+        metric: 用于排序与绘图的字段，默认 best_val_accuracy
+        top_n: 条形图展示前多少组
+    """
+    import os
+
+    if not results:
+        print("plot_hyperparameter_search_results: 无数据，跳过。")
+        return
+    os.makedirs(save_path, exist_ok=True)
+    try:
+        plt.rcParams["font.sans-serif"] = ["SimHei", "DejaVu Sans"]
+        plt.rcParams["axes.unicode_minus"] = False
+    except Exception:
+        pass
+
+    by_id = sorted(results, key=lambda x: x.get("run_id", 0))
+    xs = [r.get("run_id", i) for i, r in enumerate(by_id)]
+    ys = [float(r.get(metric, 0.0)) for r in by_id]
+
+    sorted_desc = sorted(results, key=lambda x: float(x.get(metric, 0.0)), reverse=True)
+    top = sorted_desc[: min(top_n, len(sorted_desc))]
+    labels = [_hparam_run_label(r) for r in top]
+    vals = [float(r.get(metric, 0.0)) for r in top]
+
+    fig, axes = plt.subplots(2, 1, figsize=(12, 10))
+
+    axes[0].plot(xs, ys, "o-", color="#2c7fb8", linewidth=1.5, markersize=5, label=metric)
+    axes[0].set_xlabel("run_id / 搜索顺序", fontsize=11)
+    axes[0].set_ylabel(metric, fontsize=11)
+    axes[0].set_title("各次超参组合的验证指标（按搜索顺序）", fontsize=13, fontweight="bold")
+    axes[0].grid(True, alpha=0.35)
+    axes[0].legend()
+
+    y_pos = np.arange(len(top))
+    axes[1].barh(y_pos, vals, color="#7fcdbb", edgecolor="#2c7fb8", linewidth=0.5)
+    axes[1].set_yticks(y_pos)
+    axes[1].set_yticklabels([f"#{t.get('run_id', '?')} " + _hparam_run_label(t, 40) for t in top], fontsize=8)
+    axes[1].invert_yaxis()
+    axes[1].set_xlabel(metric, fontsize=11)
+    axes[1].set_title(f"Top-{len(top)} 超参组合（按 {metric}）", fontsize=13, fontweight="bold")
+    axes[1].grid(True, axis="x", alpha=0.35)
+
+    plt.tight_layout()
+    out = os.path.join(save_path, "hyperparameter_search_summary.png")
+    plt.savefig(out, dpi=220, bbox_inches="tight")
+    plt.close()
+    print(f"超参数搜索汇总图已保存: {out}")

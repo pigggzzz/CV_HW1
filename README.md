@@ -31,8 +31,9 @@ CV_HW1/
 ├── checkpoints/                  # 模型权重保存目录
 ├── figures/                      # 生成的图表和可视化
 │
-├── train.py                      # 简单的训练脚本
-├── run_experiment.py             # 完整的实验流程脚本
+├── train.py                      # **主入口**：超参搜索 → 训练 → 测试 → 可视化与报告
+├── results/                      # 超参搜索结果（json/csv）
+├── run_experiment.py             # 已弃用，内部转调 train.py（兼容旧命令）
 ├── visualization.py              # 可视化和分析函数
 └── README.md                     # 本文件
 ```
@@ -45,25 +46,25 @@ CV_HW1/
 pip install numpy matplotlib scikit-learn
 ```
 
-### 2. 运行完整实验
+### 2. 运行完整实验（推荐唯一入口）
 
-```bash
-python run_experiment.py
-```
-
-这个脚本会：
-- 下载 Fashion-MNIST 数据集
-- 训练三层 MLP 模型
-- 在测试集上评估性能
-- 生成训练曲线和可视化
-- 分析错误分类的样本
-- 生成实验报告
-
-### 3. 运行简单训练
+在项目根目录执行：
 
 ```bash
 python train.py
 ```
+
+该流程会依次完成：数据准备 → **网格超参短训**（默认每组 20 epoch）→ 用最优超参 **长训**（默认 100 epoch）→ 测试集准确率与 **混淆矩阵** → 保存 `checkpoints/best_model.npz` → 生成训练/验证 **Loss 与验证 Accuracy 曲线**、**第一层权重图**、**错例图**，并输出 `figures/experiment_report.md` 草稿。超参对比表见 `results/hparam_sweep_short.json` / `.csv`，汇总图见 `figures/hyperparameter_search_summary.png`。
+
+可选参数：
+
+```bash
+python train.py --skip-hparam-search          # 跳过短训，用默认超参直接长训
+python train.py --eval-only                   # 仅加载已有权重在测试集评估并出图（需先有 best_model.npz 与 best_hparams.json）
+python train.py --search-type random --search-epochs 20
+```
+
+旧命令 `python run_experiment.py` 与 `python train.py` 等价（已转调）。
 
 ## 详细功能说明
 
